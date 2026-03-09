@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install expo@~54.0.0 --save)"
+    ]
+  }
+}
