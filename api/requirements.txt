@@ -1,2 +1,5 @@
 fastapi
 uvicorn[standard]
+azure-cosmos
+pygeohash
+python-dotenv
