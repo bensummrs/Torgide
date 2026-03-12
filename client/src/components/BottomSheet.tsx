@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react"
 import { useRef } from "react"
 
-const SNAPS = [0.18, 0.52]
+const SNAPS = [0.18, 0.52, 0.95]
 
 interface BottomSheetProps {
     children: React.ReactNode

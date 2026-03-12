@@ -116,6 +116,10 @@
     --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+.leaflet-tile-pane {
+  filter: saturate(0.5) brightness(1.08) sepia(0.18) contrast(0.95);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

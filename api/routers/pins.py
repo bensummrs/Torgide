@@ -58,6 +58,18 @@ def get_pins_bbox(
     return [Pin(**item) for item in items]
 
 
+@router.get("/popular", response_model=List[Pin])
+def get_popular_pins():
+    """Return all pins as popular spots (temporary — no ranking yet)."""
+    if container is None:
+        raise HTTPException(status_code=503, detail="Database not configured")
+    items = list(container.query_items(
+        query="SELECT * FROM c",
+        enable_cross_partition_query=True,
+    ))
+    return [Pin(**item) for item in items]
+
+
 @router.get("", response_model=List[Pin])
 def get_pins():
     if container is None:

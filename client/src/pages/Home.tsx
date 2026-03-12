@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Search, SlidersHorizontal, MapPin, Plus } from 'lucide-react'
+import { Search, SlidersHorizontal, MapPin, Plus, Footprints, Bus, Car, ParkingSquare, Sunrise, Sunset } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { MapView, type MapBounds } from '../components/MapView'
 import { BottomSheet } from '@/components/BottomSheet'
@@ -7,6 +7,14 @@ import { searchPlaces, fetchNearbyPlaces, distanceMi, type Place } from '@/lib/g
 
 const DEFAULT_CENTER: [number, number] = [40.7128, -74.006]
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
+
+interface Transport {
+  best: 'walk' | 'bus' | 'drive'
+  walk_mins?: number
+  bus_stop?: string
+  car_park?: string
+  notes?: string
+}
 
 interface DbPin {
   id: string
@@ -16,6 +24,15 @@ interface DbPin {
   latitude: number
   longitude: number
   geohash: string
+  videos?: string[]
+  transport?: Transport
+  sun?: 'sunrise' | 'sunset' | 'both'
+}
+
+function getTikTokEmbedUrl(url: string): string | null {
+  const match = url.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/)
+  if (match) return `https://www.tiktok.com/embed/v2/${match[1]}`
+  return null
 }
 
 export default function Home() {
@@ -31,7 +48,7 @@ export default function Home() {
   const [selectedPin, setSelectedPin] = useState<DbPin | null>(null)
   const searchRef = useRef<HTMLDivElement>(null)
 
-  // Geolocation on mount
+  // Geolocation on mount — fall back to first popular spot if denied
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -39,7 +56,15 @@ export default function Home() {
         setUserLocation(loc)
         setCenter(loc)
       },
-      () => setLocationDenied(true),
+      () => {
+        setLocationDenied(true)
+        fetch(`${API_URL}/pins/popular`)
+          .then((r) => r.ok ? r.json() : [])
+          .then((pins: DbPin[]) => {
+            if (pins.length > 0) setCenter([pins[0].latitude, pins[0].longitude])
+          })
+          .catch(() => {})
+      },
       { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
     )
   }, [])
@@ -140,10 +165,21 @@ export default function Home() {
       <BottomSheet forceSnap={selectedPin ? 1 : undefined}>
         {selectedPin ? (
           <div className="px-4 pb-8">
+            {/* Header */}
             <div className="flex items-start justify-between mb-3">
               <div className="flex-1 min-w-0">
-                <h2 className="text-base font-bold truncate">{selectedPin.name}</h2>
-                <p className="text-xs text-muted-foreground capitalize mt-0.5">{selectedPin.type}</p>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base font-bold truncate">{selectedPin.name}</h2>
+                  {selectedPin.sun === 'sunrise' && <Sunrise className="size-4 text-amber-500 shrink-0" />}
+                  {selectedPin.sun === 'sunset' && <Sunset className="size-4 text-orange-500 shrink-0" />}
+                  {selectedPin.sun === 'both' && (
+                    <>
+                      <Sunrise className="size-4 text-amber-500 shrink-0" />
+                      <Sunset className="size-4 text-orange-500 shrink-0" />
+                    </>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground capitalize mt-0.5">{selectedPin.type.replace('_', ' ')}</p>
               </div>
               <button
                 onClick={() => setSelectedPin(null)}
@@ -152,13 +188,80 @@ export default function Home() {
                 ×
               </button>
             </div>
+
+            {/* Notes */}
             {selectedPin.notes && (
-              <p className="text-sm text-foreground leading-relaxed">{selectedPin.notes}</p>
+              <p className="text-sm text-foreground leading-relaxed mb-3">{selectedPin.notes}</p>
             )}
-            <div className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
+
+            {/* Transport */}
+            {selectedPin.transport && (
+              <div className="rounded-2xl bg-secondary p-3 mb-3 flex flex-col gap-2">
+                <div className="flex items-center gap-2 text-sm font-semibold">
+                  {selectedPin.transport.best === 'walk' && <Footprints className="size-4 text-primary" />}
+                  {selectedPin.transport.best === 'bus' && <Bus className="size-4 text-primary" />}
+                  {selectedPin.transport.best === 'drive' && <Car className="size-4 text-primary" />}
+                  <span className="capitalize">Best by {selectedPin.transport.best}</span>
+                  {selectedPin.transport.walk_mins != null && (
+                    <span className="ml-auto text-xs font-normal text-muted-foreground">
+                      ~{selectedPin.transport.walk_mins} min walk
+                    </span>
+                  )}
+                </div>
+                {selectedPin.transport.bus_stop && (
+                  <div className="flex items-start gap-2 text-xs text-muted-foreground">
+                    <Bus className="size-3 shrink-0 mt-0.5" />
+                    <span>{selectedPin.transport.bus_stop}</span>
+                  </div>
+                )}
+                {selectedPin.transport.car_park && (
+                  <div className="flex items-start gap-2 text-xs text-muted-foreground">
+                    <ParkingSquare className="size-3 shrink-0 mt-0.5" />
+                    <span>{selectedPin.transport.car_park}</span>
+                  </div>
+                )}
+                {selectedPin.transport.notes && (
+                  <p className="text-xs text-muted-foreground italic">{selectedPin.transport.notes}</p>
+                )}
+              </div>
+            )}
+
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-3">
               <MapPin className="size-3 text-primary shrink-0" />
               <span>{selectedPin.latitude.toFixed(5)}, {selectedPin.longitude.toFixed(5)}</span>
             </div>
+
+            {/* Videos */}
+            {selectedPin.videos && selectedPin.videos.length > 0 && (
+              <div className="flex flex-col gap-2">
+                {selectedPin.videos.map((url, i) => {
+                  const embedUrl = getTikTokEmbedUrl(url)
+                  if (embedUrl) {
+                    return (
+                      <iframe
+                        key={i}
+                        src={embedUrl}
+                        className="w-full rounded-2xl border-0"
+                        style={{ height: 560 }}
+                        allow="fullscreen"
+                        allowFullScreen
+                      />
+                    )
+                  }
+                  return (
+                    <a
+                      key={i}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-primary underline truncate"
+                    >
+                      {url}
+                    </a>
+                  )
+                })}
+              </div>
+            )}
           </div>
         ) : (
           <>
