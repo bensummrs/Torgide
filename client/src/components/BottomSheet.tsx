@@ -1,14 +1,15 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { useRef } from "react"
 
 const SNAPS = [0.18, 0.52]
 
 interface BottomSheetProps {
     children: React.ReactNode
+    forceSnap?: number
 }
 
-export function BottomSheet({ children }: BottomSheetProps) {
-    const sheet = useBottomSheet();
+export function BottomSheet({ children, forceSnap }: BottomSheetProps) {
+    const sheet = useBottomSheet(forceSnap);
 
     return (
         <div
@@ -38,8 +39,12 @@ export function BottomSheet({ children }: BottomSheetProps) {
 }
 
 
-function useBottomSheet() {
+function useBottomSheet(forceSnap?: number) {
     const [snapIndex, setSnapIndex] = useState(0)
+
+    useEffect(() => {
+        if (forceSnap !== undefined) setSnapIndex(forceSnap)
+    }, [forceSnap])
     const [dragging, setDragging] = useState(false)
     const [dragOffset, setDragOffset] = useState(0)
     const startY = useRef(0)
