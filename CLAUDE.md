@@ -69,5 +69,6 @@ uvicorn main:app --reload
 - Do not commit `node_modules`, `.env`, or build artifacts
 - Maps use OpenStreetMap tiles — no API key needed
 - Prefer editing existing files over creating new ones
-- **Always use shadcn components** when one exists for the use case (e.g. `Drawer` for bottom sheets, `Button`, etc.) before writing custom UI
+- **Always use shadcn components** (`Button`, `Input`, `Label`, `Textarea`, `Drawer`, etc.) — never write raw `<button>`, `<input>`, or `<textarea>` elements when a shadcn equivalent exists. Install missing components with `npx shadcn@latest add <name>` before using them.
+- **Style shadcn components with Tailwind className overrides** to match the app's design language (e.g. `rounded-2xl`, `bg-secondary`, `h-12`, `focus-visible:border-primary`) — keep the shadcn primitive but apply Tailwind to match the UI style.
 - Bottom sheets use shadcn `Drawer` (vaul) with `snapPoints`, `modal={false}`, and no `DrawerOverlay` so the map stays unblurred
