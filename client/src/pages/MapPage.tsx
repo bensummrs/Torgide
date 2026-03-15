@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Search, MapPin, Footprints, Bus, Car, ParkingSquare, Sunrise, Sunset, ArrowLeft, ChevronLeft } from 'lucide-react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { MapView, type MapBounds } from '../components/MapView'
 import { BottomSheet } from '@/components/BottomSheet'
 import { searchPlaces, fetchNearbyPlaces, distanceMi, type Place } from '@/lib/geo'
@@ -97,19 +97,24 @@ function PinDetail({ pin, onClose }: { pin: DbPin; onClose: () => void }) {
       </div>
 
       {pin.videos && pin.videos.length > 0 && (
-        <div className="flex flex-col gap-2">
+        <div className="flex overflow-x-auto gap-3 pb-2 -mx-4 px-4 scrollbar-none">
           {pin.videos.map((url, i) => {
             const embedUrl = getTikTokEmbedUrl(url)
             if (embedUrl) {
               return (
-                <iframe
+                <div
                   key={i}
-                  src={embedUrl}
-                  className="w-full rounded-2xl border-0"
-                  style={{ height: 560 }}
-                  allow="fullscreen"
-                  allowFullScreen
-                />
+                  className="shrink-0 rounded-2xl overflow-hidden"
+                  style={{ width: 200, height: 330 }}
+                >
+                  <iframe
+                    src={embedUrl}
+                    className="border-0"
+                    style={{ width: 200, height: 430 }}
+                    allow="fullscreen"
+                    allowFullScreen
+                  />
+                </div>
               )
             }
             return (
@@ -118,7 +123,7 @@ function PinDetail({ pin, onClose }: { pin: DbPin; onClose: () => void }) {
                 href={url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs text-primary underline truncate"
+                className="shrink-0 text-xs text-primary underline truncate"
               >
                 {url}
               </a>
@@ -132,14 +137,17 @@ function PinDetail({ pin, onClose }: { pin: DbPin; onClose: () => void }) {
 
 export default function MapPage() {
   const navigate = useNavigate()
-  const location = useLocation()
-  const state = location.state as { lat?: number; lon?: number; name?: string } | null
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  const urlLat = searchParams.get('lat')
+  const urlLon = searchParams.get('lon')
+  const urlPinId = searchParams.get('pin')
 
   const initialCenter: [number, number] =
-    state?.lat != null && state?.lon != null ? [state.lat, state.lon] : DEFAULT_CENTER
+    urlLat && urlLon ? [parseFloat(urlLat), parseFloat(urlLon)] : DEFAULT_CENTER
 
   const [center, setCenter] = useState<[number, number]>(initialCenter)
-  const [query, setQuery] = useState(state?.name ?? '')
+  const [query, setQuery] = useState('')
   const [suggestions, setSuggestions] = useState<Place[]>([])
   const [nearbyPlaces, setNearbyPlaces] = useState<Place[]>([])
   const [loadingPlaces, setLoadingPlaces] = useState(false)
@@ -153,6 +161,24 @@ export default function MapPage() {
       .then(setNearbyPlaces)
       .finally(() => setLoadingPlaces(false))
   }, [center])
+
+  // Auto-select pin from URL param once dbPins are loaded
+  useEffect(() => {
+    if (!urlPinId || selectedPin) return
+    const pin = dbPins.find((p) => p.id === urlPinId)
+    if (pin) setSelectedPin(pin)
+  }, [dbPins, urlPinId, selectedPin])
+
+  function selectPin(pin: DbPin) {
+    setSelectedPin(pin)
+    setCenter([pin.latitude, pin.longitude])
+    setSearchParams({ pin: pin.id, lat: String(pin.latitude), lon: String(pin.longitude) })
+  }
+
+  function closePin() {
+    setSelectedPin(null)
+    setSearchParams({})
+  }
 
   const pinFetchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -247,13 +273,13 @@ export default function MapPage() {
             {selectedPin ? (
               <div className="pt-4">
                 <button
-                  onClick={() => setSelectedPin(null)}
+                  onClick={closePin}
                   className="flex items-center gap-1.5 text-sm text-muted-foreground px-4 mb-3 hover:text-foreground"
                 >
                   <ArrowLeft className="size-3.5" />
                   Back
                 </button>
-                <PinDetail pin={selectedPin} onClose={() => setSelectedPin(null)} />
+                <PinDetail pin={selectedPin} onClose={closePin} />
               </div>
             ) : (
               <div className="px-4 py-4">
@@ -274,10 +300,7 @@ export default function MapPage() {
                     {dbPins.map((pin) => (
                       <button
                         key={pin.id}
-                        onClick={() => {
-                          setSelectedPin(pin)
-                          setCenter([pin.latitude, pin.longitude])
-                        }}
+                        onClick={() => selectPin(pin)}
                         className="rounded-2xl border border-border bg-secondary text-left overflow-hidden hover:shadow-md transition-shadow"
                       >
                         <div className="h-28 bg-primary/10 flex items-center justify-center">
@@ -325,7 +348,7 @@ export default function MapPage() {
             places={nearbyPlaces}
             pins={dbPins}
             onBoundsChange={handleBoundsChange}
-            onPinClick={(pin) => setSelectedPin(pin)}
+            onPinClick={selectPin}
           />
 
           {/* MOBILE ONLY: floating top bar */}
@@ -375,7 +398,7 @@ export default function MapPage() {
           <div className="md:hidden">
             <BottomSheet forceSnap={selectedPin ? 1 : undefined}>
               {selectedPin ? (
-                <PinDetail pin={selectedPin} onClose={() => setSelectedPin(null)} />
+                <PinDetail pin={selectedPin} onClose={closePin} />
               ) : (
                 <>
                   <div className="px-4 pb-2">

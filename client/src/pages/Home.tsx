@@ -69,7 +69,7 @@ export default function Home() {
   }
 
   function selectPin(pin: DbPin) {
-    navigate('/map', { state: { lat: pin.latitude, lon: pin.longitude, name: pin.name } })
+    navigate(`/map?pin=${pin.id}&lat=${pin.latitude}&lon=${pin.longitude}`)
   }
 
   const visiblePins = activeCategory

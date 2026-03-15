@@ -2,9 +2,6 @@ name: Deploy Torgide API
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
   workflow_call:
 
 jobs:
