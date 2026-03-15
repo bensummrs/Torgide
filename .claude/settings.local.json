@@ -6,7 +6,8 @@
       "Bash(npm install:*)",
       "Bash(npm run:*)",
       "Bash(npx shadcn@latest add drawer --yes)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "WebSearch"
     ]
   }
 }
