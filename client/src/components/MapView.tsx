@@ -116,7 +116,7 @@ export function MapView({
           key={place.id}
           center={[place.lat, place.lon]}
           radius={6}
-          pathOptions={{ color: '#fff', fillColor: 'oklch(0.639 0.255 10.6)', fillOpacity: 1, weight: 2 }}
+          pathOptions={{ color: '#fff', fillColor: '#255A2B', fillOpacity: 1, weight: 2 }}
         >
           <Popup>{place.name}</Popup>
         </CircleMarker>
@@ -126,7 +126,7 @@ export function MapView({
           key={pin.id}
           center={[pin.latitude, pin.longitude]}
           radius={22}
-          pathOptions={{ color: '#fff', fillColor: 'oklch(0.639 0.255 10.6)', fillOpacity: 1, weight: 3 }}
+          pathOptions={{ color: '#fff', fillColor: '#255A2B', fillOpacity: 1, weight: 3 }}
           eventHandlers={onPinClick ? { click: () => onPinClick(pin) } : undefined}
         />
       ))}

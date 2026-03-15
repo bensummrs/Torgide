@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Search, SlidersHorizontal, MapPin, Plus, Footprints, Bus, Car, ParkingSquare, Sunrise, Sunset } from 'lucide-react'
+import { Search, MapPin, Plus, Footprints, Bus, Car, ParkingSquare, Sunrise, Sunset } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { MapView, type MapBounds } from '../components/MapView'
 import { BottomSheet } from '@/components/BottomSheet'
@@ -149,10 +149,7 @@ export default function Home() {
                 </div>
               )}
             </div>
-            <button className="bg-white rounded-2xl shadow-lg p-3 shrink-0 text-primary">
-              <SlidersHorizontal className="size-4" />
-            </button>
-            <button
+<button
               onClick={() => navigate('/add-pin', { state: { lat: center[0], lng: center[1] } })}
               className="bg-primary rounded-2xl shadow-lg p-3 shrink-0 text-white"
             >
