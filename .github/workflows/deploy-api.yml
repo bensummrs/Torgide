@@ -22,12 +22,8 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
-        working-directory: ./api
-        run: pip install -r requirements.txt
-
       - name: Zip package for deployment
-        run: zip -r release.zip ./api
+        run: cd api && zip -r ../release.zip .
 
       - name: Azure Login
         uses: azure/login@v2
@@ -43,7 +39,7 @@ jobs:
               { "name": "COSMOS_KEY",              "value": "${{ secrets.COSMOS_KEY }}" },
               { "name": "COSMOS_URI",              "value": "${{ secrets.COSMOS_URI }}" },
               { "name": "COSMOS_DB_NAME",          "value": "${{ secrets.COSMOS_DB_NAME }}" },
-              { "name": "SCM_DO_BUILD_DURING_DEPLOYMENT", "value": "false" }
+              { "name": "SCM_DO_BUILD_DURING_DEPLOYMENT", "value": "true" }
             ]
 
       - name: Set startup command
@@ -53,7 +49,7 @@ jobs:
             az webapp config set \
               --name webapp-torgide-api \
               --resource-group torgide \
-              --startup-file "cd /home/site/wwwroot/api && python -m uvicorn main:app --host 0.0.0.0 --port 8000"
+              --startup-file "python -m uvicorn main:app --host 0.0.0.0 --port 8000"
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
