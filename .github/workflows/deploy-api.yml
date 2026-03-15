@@ -36,7 +36,7 @@ jobs:
       - name: Set app settings (env vars)
         uses: azure/appservice-settings@v1
         with:
-          app-name: ${{ secrets.AZURE_APP_NAME }}
+          app-name: 'webapp-torgide-api'
           app-settings-json: |
             [
               { "name": "COSMOS_KEY",              "value": "${{ secrets.COSMOS_KEY }}" },
