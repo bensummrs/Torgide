@@ -29,10 +29,56 @@ interface DbPin {
   sun?: 'sunrise' | 'sunset' | 'both'
 }
 
-function getTikTokEmbedUrl(url: string): string | null {
+function getTikTokVideoId(url: string): string | null {
   const match = url.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/)
-  if (match) return `https://www.tiktok.com/embed/v2/${match[1]}`
-  return null
+  return match ? match[1] : null
+}
+
+interface TikTokMeta { thumbnail: string; author: string }
+
+function TikTokCard({ url }: { url: string }) {
+  const [meta, setMeta] = useState<TikTokMeta | null>(null)
+  const [playing, setPlaying] = useState(false)
+  const videoId = getTikTokVideoId(url)
+
+  useEffect(() => {
+    fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`)
+      .then(r => r.json())
+      .then(d => setMeta({ thumbnail: d.thumbnail_url, author: d.author_name }))
+      .catch(() => {})
+  }, [url])
+
+  if (playing && videoId) {
+    return (
+      <div className="rounded-2xl overflow-hidden bg-black" style={{ height: 560 }}>
+        <iframe
+          src={`https://www.tiktok.com/embed/v2/${videoId}?autoplay=1`}
+          className="border-0 w-full h-full"
+          allow="autoplay; fullscreen"
+          allowFullScreen
+        />
+      </div>
+    )
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => setPlaying(true)}
+      className="relative w-full rounded-2xl overflow-hidden bg-black"
+      style={{ aspectRatio: '9/16', maxHeight: 320 }}
+    >
+      {meta?.thumbnail && (
+        <img src={meta.thumbnail} alt="" className="w-full h-full object-cover" />
+      )}
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/30">
+        <div className="w-14 h-14 rounded-full bg-black/60 flex items-center justify-center">
+          <svg viewBox="0 0 24 24" className="w-6 h-6 fill-white ml-1"><path d="M8 5v14l11-7z"/></svg>
+        </div>
+        {meta?.author && <span className="text-white text-xs font-medium drop-shadow">{meta.author}</span>}
+      </div>
+    </button>
+  )
 }
 
 function PinDetail({ pin, onClose }: { pin: DbPin; onClose: () => void }) {
@@ -97,38 +143,12 @@ function PinDetail({ pin, onClose }: { pin: DbPin; onClose: () => void }) {
       </div>
 
       {pin.videos && pin.videos.length > 0 && (
-        <div className="flex overflow-x-auto gap-3 pb-2 -mx-4 px-4 scrollbar-none">
-          {pin.videos.map((url, i) => {
-            const embedUrl = getTikTokEmbedUrl(url)
-            if (embedUrl) {
-              return (
-                <div
-                  key={i}
-                  className="shrink-0 rounded-2xl overflow-hidden"
-                  style={{ width: 200, height: 330 }}
-                >
-                  <iframe
-                    src={embedUrl}
-                    className="border-0"
-                    style={{ width: 200, height: 430 }}
-                    allow="fullscreen"
-                    allowFullScreen
-                  />
-                </div>
-              )
-            }
-            return (
-              <a
-                key={i}
-                href={url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="shrink-0 text-xs text-primary underline truncate"
-              >
-                {url}
-              </a>
-            )
-          })}
+        <div className="flex flex-col gap-2 pb-2">
+          {pin.videos.map((url, i) => (
+            getTikTokVideoId(url)
+              ? <TikTokCard key={i} url={url} />
+              : <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline truncate">{url}</a>
+          ))}
         </div>
       )}
     </div>

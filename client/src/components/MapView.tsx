@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, CircleMarker, useMap, useMapEvents } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
@@ -30,6 +30,48 @@ interface DbPin {
   latitude: number
   longitude: number
   geohash: string
+  videos?: string[]
+}
+
+function getTikTokUrl(videos?: string[]): string | null {
+  return videos?.find(u => u.includes('tiktok.com')) ?? null
+}
+
+function ThumbnailPinMarker({ pin, onClick }: { pin: DbPin; onClick?: () => void }) {
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null)
+  const tikTokUrl = getTikTokUrl(pin.videos)
+
+  useEffect(() => {
+    if (!tikTokUrl) return
+    fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(tikTokUrl)}`)
+      .then(r => r.json())
+      .then(d => setThumbnailUrl(d.thumbnail_url))
+      .catch(() => {})
+  }, [tikTokUrl])
+
+  const icon = useMemo(() => {
+    const size = 52
+    const borderColor = '#ffffff'
+    const inner = thumbnailUrl
+      ? `<img src="${thumbnailUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`
+      : `<div style="width:100%;height:100%;background:#255A2B;border-radius:50%;"></div>`
+    const html = `
+      <div style="position:relative;width:${size}px;height:${size + 10}px;">
+        <div style="width:${size}px;height:${size}px;border-radius:50%;border:3px solid ${borderColor};overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.35);">
+          ${inner}
+        </div>
+        <div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:10px solid ${borderColor};"></div>
+      </div>`
+    return L.divIcon({ html, className: '', iconSize: [size, size + 10], iconAnchor: [size / 2, size + 10] })
+  }, [thumbnailUrl])
+
+  return (
+    <Marker
+      position={[pin.latitude, pin.longitude]}
+      icon={icon}
+      eventHandlers={onClick ? { click: onClick } : undefined}
+    />
+  )
 }
 
 function MapClickHandler({ onLocationPick }: { onLocationPick: (lat: number, lng: number) => void }) {
@@ -122,12 +164,10 @@ export function MapView({
         </CircleMarker>
       ))}
       {pins.map((pin) => (
-        <CircleMarker
+        <ThumbnailPinMarker
           key={pin.id}
-          center={[pin.latitude, pin.longitude]}
-          radius={22}
-          pathOptions={{ color: '#fff', fillColor: '#255A2B', fillOpacity: 1, weight: 3 }}
-          eventHandlers={onPinClick ? { click: () => onPinClick(pin) } : undefined}
+          pin={pin}
+          onClick={onPinClick ? () => onPinClick(pin) : undefined}
         />
       ))}
     </MapContainer>

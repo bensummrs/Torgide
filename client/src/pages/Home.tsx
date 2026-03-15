@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Search, MapPin, Compass, Sunrise, Sunset } from 'lucide-react'
+import logoIcon from '@/assets/torgide-darkgreen.png'
 import spotIcon from '@/assets/icons/spot.png'
 import mountainIcon from '@/assets/icons/mountain.png'
 import pineIcon from '@/assets/icons/pine.png'
@@ -18,6 +19,7 @@ interface DbPin {
   latitude: number
   longitude: number
   sun?: 'sunrise' | 'sunset' | 'both'
+  videos?: string[]
 }
 
 const CATEGORY_FILTERS = [
@@ -78,6 +80,11 @@ export default function Home() {
 
   return (
     <div className="min-h-svh bg-background flex flex-col">
+
+      {/* ── LOGO ────────────────────────────────────────────────────── */}
+      <div className="flex justify-center pt-6 pb-2">
+        <img src={logoIcon} alt="Torgide" className="h-8 object-contain" />
+      </div>
 
       {/* ── SEARCH BAR ──────────────────────────────────────────────── */}
       <div className="p-4">
@@ -198,17 +205,33 @@ const CATEGORY_ICON: Record<string, string> = {
 
 function FeaturedCard({ pin, onClick }: { pin: DbPin; onClick: () => void }) {
   const catIcon = CATEGORY_ICON[pin.type]
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null)
+  const tikTokUrl = pin.videos?.find(u => u.includes('tiktok.com'))
+
+  useEffect(() => {
+    if (!tikTokUrl) return
+    fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(tikTokUrl)}`)
+      .then(r => r.json())
+      .then(d => setThumbnailUrl(d.thumbnail_url))
+      .catch(() => {})
+  }, [tikTokUrl])
+
   return (
     <button
       onClick={onClick}
-      className="shrink-0 w-48 md:w-auto rounded-3xl border border-border bg-card text-left overflow-hidden active:scale-[0.98] transition-transform hover:shadow-md"
+      className="shrink-0 w-44 md:w-auto text-left active:scale-[0.97] transition-transform"
     >
-      {/* Image placeholder — replace with real image when available */}
-      <div className="h-36 bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center relative">
-        {catIcon
-          ? <img src={catIcon} alt={pin.type} className="size-12 object-contain opacity-40" />
-          : <MapPin className="size-8 text-primary/30" />
-        }
+      <div className="rounded-2xl overflow-hidden aspect-square relative bg-muted mb-2">
+        {thumbnailUrl ? (
+          <img src={thumbnailUrl} alt={pin.name} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
+            {catIcon
+              ? <img src={catIcon} alt={pin.type} className="size-20 object-contain drop-shadow-md" />
+              : <MapPin className="size-10 text-primary/40" />
+            }
+          </div>
+        )}
         {(pin.sun === 'sunrise' || pin.sun === 'both') && (
           <span className="absolute top-2 left-2 bg-amber-500/90 text-white text-[10px] font-semibold rounded-full px-2 py-0.5 flex items-center gap-1">
             <Sunrise className="size-3" /> Sunrise
@@ -220,13 +243,11 @@ function FeaturedCard({ pin, onClick }: { pin: DbPin; onClick: () => void }) {
           </span>
         )}
       </div>
-      <div className="p-3">
-        <p className="text-sm font-semibold leading-tight truncate">{pin.name}</p>
-        <p className="mt-0.5 text-[11px] text-muted-foreground capitalize">{pin.type}</p>
-        {pin.notes && (
-          <p className="mt-1 text-[11px] text-muted-foreground line-clamp-2 leading-snug">{pin.notes}</p>
-        )}
-      </div>
+      <p className="text-sm font-semibold leading-tight truncate">{pin.name}</p>
+      <p className="mt-0.5 text-[11px] text-muted-foreground capitalize">{pin.type}</p>
+      {pin.notes && (
+        <p className="mt-0.5 text-[11px] text-muted-foreground line-clamp-1 leading-snug">{pin.notes}</p>
+      )}
     </button>
   )
 }
