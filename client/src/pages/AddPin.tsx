@@ -1,5 +1,9 @@
 import { useState } from 'react'
 import { ArrowLeft, Footprints, Bus, Car, Sunrise, Sunset, Plus, X } from 'lucide-react'
+import mountainIcon from '@/assets/icons/mountain.png'
+import pineIcon from '@/assets/icons/pine.png'
+import beachIcon from '@/assets/icons/beach.png'
+import cityIcon from '@/assets/icons/city.png'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,7 +26,7 @@ export default function AddPin() {
 
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
-  const [category, setCategory] = useState('')
+  const [category, setCategory] = useState<'viewpoint' | 'nature' | 'water' | 'urban' | ''>('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -49,6 +53,10 @@ export default function AddPin() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!category) {
+      setError('Please select a category.')
+      return
+    }
     if (pickedLocation == null) {
       setError('Tap the map to set a location.')
       return
@@ -73,7 +81,7 @@ export default function AddPin() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name,
-          type: category || 'cool_spot',
+          type: category,
           notes: description || undefined,
           latitude: lat,
           longitude: lng,
@@ -97,7 +105,7 @@ export default function AddPin() {
   return (
     <div className="relative h-svh w-full bg-background flex flex-col">
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 pt-10 pb-4">
+      <div className="flex items-center gap-3 px-4 pt-4 pb-4">
         <Button
           variant="secondary"
           size="icon"
@@ -118,18 +126,34 @@ export default function AddPin() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
-            className="rounded-2xl border-border bg-secondary h-12 px-4 focus-visible:border-primary focus-visible:ring-primary/20"
+            className="rounded-2xl border-border bg-background h-12 px-4 focus-visible:border-primary focus-visible:ring-primary/20"
           />
         </div>
 
         <div className="flex flex-col gap-1.5">
           <Label>Category</Label>
-          <Input
-            placeholder="e.g. food, park, hidden gem…"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="rounded-2xl border-border bg-secondary h-12 px-4 focus-visible:border-primary focus-visible:ring-primary/20"
-          />
+          <div className="grid grid-cols-4 gap-2">
+            {([
+              { value: 'viewpoint', label: 'Viewpoint', icon: mountainIcon },
+              { value: 'nature',    label: 'Nature',    icon: pineIcon },
+              { value: 'water',     label: 'Water',     icon: beachIcon },
+              { value: 'urban',     label: 'Urban',     icon: cityIcon },
+            ] as const).map(({ value, label, icon }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setCategory(value)}
+                className={`flex flex-col items-center gap-1.5 py-3 rounded-2xl border text-xs font-semibold transition-colors ${
+                  category === value
+                    ? 'bg-primary/10 border-primary text-primary'
+                    : 'bg-secondary border-border text-muted-foreground'
+                }`}
+              >
+                <img src={icon} alt={label} className="size-7 object-contain" />
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -139,7 +163,7 @@ export default function AddPin() {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={4}
-            className="rounded-2xl border-border bg-secondary px-4 py-3 resize-none focus-visible:border-primary focus-visible:ring-primary/20"
+            className="rounded-2xl border-border bg-background px-4 py-3 resize-none focus-visible:border-primary focus-visible:ring-primary/20"
           />
         </div>
 
@@ -191,7 +215,7 @@ export default function AddPin() {
                   placeholder="Bus stop / route (e.g. Bus 42 – High St)"
                   value={busStop}
                   onChange={(e) => setBusStop(e.target.value)}
-                  className="rounded-2xl border-border bg-secondary h-12 px-4 focus-visible:border-primary focus-visible:ring-primary/20"
+                  className="rounded-2xl border-border bg-background h-12 px-4 focus-visible:border-primary focus-visible:ring-primary/20"
                 />
               )}
               {(transportBest === 'drive' || transportBest === 'bus') && (
@@ -199,7 +223,7 @@ export default function AddPin() {
                   placeholder="Car park (e.g. Elm St car park, 200 m away)"
                   value={carPark}
                   onChange={(e) => setCarPark(e.target.value)}
-                  className="rounded-2xl border-border bg-secondary h-12 px-4 focus-visible:border-primary focus-visible:ring-primary/20"
+                  className="rounded-2xl border-border bg-background h-12 px-4 focus-visible:border-primary focus-visible:ring-primary/20"
                 />
               )}
               <Input
@@ -207,13 +231,13 @@ export default function AddPin() {
                 placeholder="Walk time to spot (minutes)"
                 value={walkMins}
                 onChange={(e) => setWalkMins(e.target.value)}
-                className="rounded-2xl border-border bg-secondary h-12 px-4 focus-visible:border-primary focus-visible:ring-primary/20"
+                className="rounded-2xl border-border bg-background h-12 px-4 focus-visible:border-primary focus-visible:ring-primary/20"
               />
               <Input
                 placeholder="Extra note (e.g. drive to car park, then 10 min walk)"
                 value={transportNotes}
                 onChange={(e) => setTransportNotes(e.target.value)}
-                className="rounded-2xl border-border bg-secondary h-12 px-4 focus-visible:border-primary focus-visible:ring-primary/20"
+                className="rounded-2xl border-border bg-background h-12 px-4 focus-visible:border-primary focus-visible:ring-primary/20"
               />
             </div>
           )}
@@ -228,7 +252,7 @@ export default function AddPin() {
               value={videoInput}
               onChange={(e) => setVideoInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addVideo())}
-              className="rounded-2xl border-border bg-secondary h-12 px-4 focus-visible:border-primary focus-visible:ring-primary/20"
+              className="rounded-2xl border-border bg-background h-12 px-4 focus-visible:border-primary focus-visible:ring-primary/20"
             />
             <button
               type="button"
@@ -241,7 +265,7 @@ export default function AddPin() {
           {videos.length > 0 && (
             <div className="flex flex-col gap-1.5">
               {videos.map((url, i) => (
-                <div key={i} className="flex items-center gap-2 rounded-2xl bg-secondary border border-border px-3 py-2">
+                <div key={i} className="flex items-center gap-2 rounded-2xl bg-background border border-border px-3 py-2">
                   <span className="flex-1 text-xs truncate text-muted-foreground">{url}</span>
                   <button
                     type="button"
@@ -285,7 +309,7 @@ export default function AddPin() {
         <Button
           type="submit"
           disabled={loading}
-          className="mt-auto rounded-2xl h-12 text-sm font-semibold shadow-md"
+          className="mt-auto rounded-full h-12 text-sm font-semibold shadow-md"
         >
           {loading ? 'Saving…' : 'Save Pin'}
         </Button>

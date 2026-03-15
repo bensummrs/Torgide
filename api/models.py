@@ -12,7 +12,7 @@ class Transport(BaseModel):
 
 class PinCreate(BaseModel):
     name: str
-    type: str  # "view_spot" | "cool_spot"
+    type: Literal["viewpoint", "nature", "water", "urban"]
     notes: Optional[str] = None
     latitude: float
     longitude: float
