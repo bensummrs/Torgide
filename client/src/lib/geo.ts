@@ -6,11 +6,11 @@ export interface Place {
   category: string
 }
 
-const API_BASE = 'http://localhost:8000'
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 
 export async function searchPlaces(query: string): Promise<Place[]> {
   try {
-    const res = await fetch(`${API_BASE}/places/search?q=${encodeURIComponent(query)}`)
+    const res = await fetch(`${API_URL}/places/search?q=${encodeURIComponent(query)}`)
     if (!res.ok) return []
     return res.json()
   } catch {
@@ -20,7 +20,7 @@ export async function searchPlaces(query: string): Promise<Place[]> {
 
 export async function fetchNearbyPlaces(lat: number, lon: number): Promise<Place[]> {
   try {
-    const res = await fetch(`${API_BASE}/places/nearby?lat=${lat}&lon=${lon}`)
+    const res = await fetch(`${API_URL}/places/nearby?lat=${lat}&lon=${lon}`)
     if (!res.ok) return []
     return res.json()
   } catch {
