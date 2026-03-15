@@ -262,7 +262,6 @@ export default function AddPin() {
             <MapView
               center={mapCenter}
               zoom={14}
-              showUserMarker={false}
               onLocationPick={(lat, lng) => setPickedLocation([lat, lng])}
               pickedLocation={pickedLocation}
             />
