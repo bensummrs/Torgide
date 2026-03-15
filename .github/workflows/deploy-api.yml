@@ -1,11 +1,10 @@
 name: Deploy Torgide API
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'api/**'
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
   deploy-api:
